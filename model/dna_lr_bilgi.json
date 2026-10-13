@@ -1,0 +1,17 @@
+{
+ "k": 6,
+ "siniflar": [
+  "G-proteine bağlı reseptör",
+  "Tirozin kinaz",
+  "Tirozin fosfataz",
+  "Sentetaz",
+  "Sentaz",
+  "İyon kanalı",
+  "Transkripsiyon faktörü"
+ ],
+ "dogruluk": {
+  "İnsan (test)": 0.79,
+  "Şempanze": 0.944,
+  "Köpek": 0.843
+ }
+}

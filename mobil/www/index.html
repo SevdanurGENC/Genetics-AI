@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Genetik · YZ</title>
+<style>
+  :root{--bg:#f1f6f4;--kart:#fff;--yazi:#14251f;--soluk:#5a6e66;--ana:#0f7a63;--ana2:#e1f3ee;--kirmizi:#c62f3a;--cizgi:#dbe7e2}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--yazi)}
+  header{background:linear-gradient(135deg,#169a7c,#0a5257);color:#fff;padding:18px 16px 0}
+  header h1{margin:0;font-size:21px}
+  header p{margin:4px 0 12px;opacity:.88;font-size:13px}
+  .sekmeler{display:flex;gap:4px}
+  .sekme{flex:1;border:0;background:rgba(255,255,255,.14);color:#fff;padding:11px 6px;font-size:14px;font-weight:600;border-radius:10px 10px 0 0}
+  .sekme.aktif{background:var(--bg);color:var(--ana)}
+  main{padding:0 14px 40px;max-width:600px;margin:0 auto}
+  .kart{background:var(--kart);border-radius:14px;padding:14px;margin-top:12px;box-shadow:0 1px 2px rgba(10,50,40,.06),0 4px 14px rgba(10,50,40,.05)}
+  .kart h2{font-size:15px;margin:0 0 8px}
+  .btn{width:100%;padding:12px;border:0;border-radius:11px;background:var(--ana);color:#fff;font-size:15px;font-weight:600}
+  .btn.ikinci{background:var(--ana2);color:var(--ana)}
+  .cipler{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+  .cip{border:1px solid var(--cizgi);background:#fff;border-radius:20px;padding:6px 10px;font-size:12px;color:var(--yazi)}
+  .cip.sec{background:var(--ana);color:#fff;border-color:var(--ana)}
+  canvas{width:100%;display:block;border-radius:10px}
+  .kucuk{font-size:12px;color:var(--soluk);line-height:1.45}
+  .buyuk{font-size:22px;font-weight:800;margin:2px 0}
+  .lejant{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--soluk);margin-top:6px}
+  .lejant i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+  textarea{width:100%;height:96px;border:1.5px solid var(--cizgi);border-radius:10px;padding:10px;font-family:ui-monospace,Menlo,monospace;font-size:12px;resize:vertical}
+  .ciftli{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .ciftli figure{margin:0} figcaption{font-size:11.5px;color:var(--soluk);text-align:center;margin-top:4px}
+  .olas{display:grid;grid-template-columns:150px 1fr 42px;gap:5px 8px;align-items:center;font-size:12.5px}
+  .olas .c{height:12px;background:#eef3f1;border-radius:6px;overflow:hidden} .olas .c span{display:block;height:100%;background:var(--ana)}
+  .uyari{background:#fff6e5;border:1px solid #f1d49b;color:#6b4e0c;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.45}
+  .gizli{display:none}
+  ul{margin:6px 0;padding-left:18px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🧬 Genetik · Görüntü İşleme ve YZ</h1>
+  <p>Karyotip analizi ve DNA'nın "görüntüsü" — tamamen cihaz üzerinde</p>
+  <div class="sekmeler"><button class="sekme aktif" data-s="k">Karyotip</button><button class="sekme" data-s="d">DNA → Görüntü</button></div>
+</header>
+<main>
+  <!-- ============ KARYOTİP ============ -->
+  <section id="s_k">
+    <div class="kart">
+      <h2>Metafaz görüntüsü seçin</h2>
+      <div class="kucuk">Örnek hücreler (simüle G-bantlı metafazlar):</div>
+      <div class="cipler" id="metafazCip"></div>
+      <button class="btn ikinci" id="kGaleri">🖼️ Galeriden görüntü seç</button>
+      <input type="file" id="kDosya" accept="image/*" class="gizli">
+    </div>
+    <div class="kart gizli" id="kSonuc">
+      <div class="kucuk">Modelin karyotip formülü</div>
+      <div class="buyuk" id="kFormul"></div>
+      <ul id="kYorum"></ul>
+      <canvas id="kGorsel"></canvas>
+      <div class="lejant"><span><i style="background:#16a34a"></i>tek kromozom</span><span><i style="background:#f59e0b"></i>küme (sayılamadı)</span><span><i style="background:#3b82f6"></i>ara faz çekirdeği</span></div>
+      <h2 style="margin-top:14px">Dijital karyogram</h2>
+      <canvas id="kKaryogram"></canvas>
+      <div class="kucuk" id="kSure" style="margin-top:6px"></div>
+    </div>
+    <div class="kart">
+      <details><summary><b>Nasıl çalışıyor?</b></summary>
+        <ul class="kucuk">
+          <li><b>Eşikleme (Otsu):</b> koyu kromozomlar açık arka plandan ayrılır.</li>
+          <li><b>Bağlı bileşenler:</b> her nesne bulunur; boyut ve uzamaya göre kromozom / küme / çekirdek ayrılır.</li>
+          <li><b>Kesme:</b> her kromozom ana eksenine göre dik çevrilir (80×24 piksel).</li>
+          <li><b>CNN:</b> 24 sınıflı bir sinir ağı her kromozomun tipini (1–22, X, Y) tahmin eder.</li>
+          <li><b>Biyolojik kısıt:</b> her tipe en fazla 2 kromozom atanır; artan kromozom trizomiyi gösterir.</li>
+        </ul>
+        <div class="kucuk">Model yalnızca <b>sentetik</b> metafazlarla eğitildi; gerçek mikroskop görüntülerinde güvenilir değildir. Yapısal anomalileri (translokasyon, delesyon) saptayamaz.</div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ============ DNA ============ -->
+  <section id="s_d" class="gizli">
+    <div class="kart">
+      <h2>DNA dizisi</h2>
+      <div class="kucuk">Örnek genler (modelin eğitimde görmediği diziler):</div>
+      <div class="cipler" id="dnaCip"></div>
+      <textarea id="dnaGiris" placeholder="ATGC… dizisini yapıştırın (FASTA da olur)"></textarea>
+      <button class="btn" id="dnaBtn" style="margin-top:8px">Görüntüye çevir ve sınıflandır</button>
+    </div>
+    <div class="kart gizli" id="dSonuc">
+      <div class="ciftli">
+        <figure><canvas id="dCgr" width="512" height="512"></canvas><figcaption>Kaos oyunu (her nokta bir nükleotit)</figcaption></figure>
+        <figure><canvas id="dFcgr" width="512" height="512"></canvas><figcaption id="dFcgrYazi">FCGR 64×64 (6-mer sıklıkları)</figcaption></figure>
+      </div>
+      <label class="kucuk" style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" id="dKatki"> Karara katkı veren 6-mer'leri göster</label>
+      <h2 style="margin-top:12px">Gen ailesi tahmini</h2>
+      <div class="olas" id="dOlas"></div>
+      <div class="kucuk" id="dBilgi" style="margin-top:8px"></div>
+    </div>
+    <div class="kart">
+      <details><summary><b>Kaos Oyunu nedir?</b></summary>
+        <p class="kucuk">Karenin köşelerine A (sol alt), C (sol üst), G (sağ üst), T (sağ alt) konur. Ortadan başlanır ve her harfte, mevcut nokta ile o harfin köşesinin tam ortasına gidilir. Ortaya çıkan desen, dizideki tüm k-mer'lerin sıklığını tek bir resimde gösterir (Jeffrey, 1990). Izgaraya bölünüp sayılınca (FCGR) bir yapay zeka modeline verilebilir.</p>
+        <p class="kucuk" id="dModelBilgi"></p>
+      </details>
+    </div>
+  </section>
+
+  <div class="kart uyari">⚠️ <b>Yalnızca eğitim amaçlıdır.</b> Klinik sitogenetik veya genetik tanıda kullanılamaz.</div>
+</main>
+<script src="yzmotor.js"></script>
+<script src="kromozom_model.js"></script>
+<script src="karyotip.js"></script>
+<script src="ornek_metafaz.js"></script>
+<script src="dna_model.js"></script>
+<script src="dna.js"></script>
+<script src="ornek_dna.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
